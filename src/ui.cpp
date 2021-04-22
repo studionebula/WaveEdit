@@ -27,6 +27,7 @@ static ImTextureID logoTextureLight;
 static ImTextureID logoTextureDark;
 static ImTextureID logoTexture;
 char lastFilename[1024] = "";
+char lastBankname[1024] = "";
 static int styleId = 0;
 int selectedId = 0;
 int lastSelectedId = 0;
@@ -136,30 +137,31 @@ static void menuWebsite() {
 static void menuNewBank() {
 	showCurrentBankPage();
 	currentBank.clear();
-	lastFilename[0] = '\0';
+	lastBankname[0] = '\0';
 	historyPush();
 }
 
 /** Caller must free() return value, guaranteed to not be NULL */
-static char *getLastDir() {
-	if (lastFilename[0] == '\0') {
+static char *getLastDir(char *fromFilename) {
+	if (fromFilename[0] == '\0') {
 		return strdup(".");
 	}
 	else {
 		char filename[PATH_MAX];
-		strncpy(filename, lastFilename, sizeof(filename));
+		//strncpy(filename, fromFilename, sizeof(filename));
+		strcpy(filename, fromFilename);
 		char *dir = dirname(filename);
 		return strdup(dir);
 	}
 }
 
 static void menuOpenBank() {
-	char *dir = getLastDir();
+	char *dir = getLastDir(lastBankname);
 	char *path = osdialog_file(OSDIALOG_OPEN, dir, NULL, NULL);
 	if (path) {
 		showCurrentBankPage();
 		currentBank.loadWAV(path);
-		snprintf(lastFilename, sizeof(lastFilename), "%s", path);
+		snprintf(lastBankname, sizeof(lastBankname), "%s", path);
 		historyPush();
 		free(path);
 	}
@@ -167,11 +169,11 @@ static void menuOpenBank() {
 }
 
 static void menuSaveBankAs() {
-	char *dir = getLastDir();
+	char *dir = getLastDir(lastBankname);
 	char *path = osdialog_file(OSDIALOG_SAVE, dir, "Untitled.wav", NULL);
 	if (path) {
 		currentBank.saveWAV(path);
-		snprintf(lastFilename, sizeof(lastFilename), "%s", path);
+		snprintf(lastBankname, sizeof(lastBankname), "%s", path);
 		free(path);
 	}
 	free(dir);
@@ -179,13 +181,13 @@ static void menuSaveBankAs() {
 
 static void menuSaveBank() {
 	if (lastFilename[0] != '\0')
-		currentBank.saveWAV(lastFilename);
+		currentBank.saveWAV(lastBankname);
 	else
 		menuSaveBankAs();
 }
 
 static void menuSaveWaves() {
-	char *dir = getLastDir();
+	char *dir = getLastDir(lastBankname);
 	char *path = osdialog_file(OSDIALOG_OPEN_DIR, dir, NULL, NULL);
 	if (path) {
 		currentBank.saveWaves(path);
@@ -223,6 +225,21 @@ static void menuPaste() {
 static void menuClear() {
 	for (int i = mini(selectedId, lastSelectedId); i <= maxi(selectedId, lastSelectedId); i++) {
 		currentBank.waves[i].clear();
+	}
+	historyPush();
+}
+
+static void menuInterpolateTwoWaves() {
+	int first = mini(selectedId, lastSelectedId); 
+	int last =  maxi(selectedId, lastSelectedId);
+	for (int i = first + 1; i < last; i++) {
+		float a = (float)(i - first) / (last - first);
+		float *w1 = currentBank.waves[first].samples;
+		float *w2 = currentBank.waves[last].samples;
+		for (int s = 0; s < WAVE_LEN; s++) {
+			currentBank.waves[i].samples[s] = (a * *w2++) + ((1.0f - a) * *w1++);
+		}
+		currentBank.waves[i].commitSamples();
 	}
 	historyPush();
 }
@@ -318,6 +335,11 @@ void renderWaveMenu() {
 	if (ImGui::MenuItem("Clear", "Delete")) {
 		menuClear();
 	}
+	if (selectedEnd >= (selectedStart + 2)) {
+		if (ImGui::MenuItem("Interpolate")) {
+			menuInterpolateTwoWaves();
+		}
+	}
 	if (ImGui::MenuItem("Randomize Effects", "R")) {
 		menuRandomize();
 	}
@@ -339,7 +361,7 @@ void renderWaveMenu() {
 	}
 
 	if (ImGui::MenuItem("Open Wave...")) {
-		char *dir = getLastDir();
+		char *dir = getLastDir(lastFilename);
 		char *path = osdialog_file(OSDIALOG_OPEN, dir, NULL, NULL);
 		if (path) {
 			currentBank.waves[selectedId].loadWAV(path);
@@ -350,7 +372,7 @@ void renderWaveMenu() {
 		free(dir);
 	}
 	if (ImGui::MenuItem("Save Wave As...")) {
-		char *dir = getLastDir();
+		char *dir = getLastDir(lastFilename);
 		char *path = osdialog_file(OSDIALOG_SAVE, dir, "Untitled.wav", NULL);
 		if (path) {
 			currentBank.waves[selectedId].saveWAV(path);
