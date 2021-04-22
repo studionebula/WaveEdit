@@ -1,5 +1,8 @@
 # Synthesis Technology WaveEdit
 
+This is a fork to add some features, fix some problems, and (hopefully) get stuff updated to build on contemporary systems. Currently it builds only on Linux, thanks to numerous dependencies on out-of-date packages and compiler conventions. Original comments follow.
+
+
 The wavetable and bank editor for the Synthesis Technology [E370](http://synthtech.com/eurorack/E370/) and [E352](http://synthtech.com/eurorack/E352/) Eurorack synthesizer modules.
 
 ### Building
