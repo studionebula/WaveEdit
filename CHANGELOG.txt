@@ -1,0 +1,8 @@
+Version 1.2 Changes:
+
+- Fixed file-overwrite problem described at https://github.com/AndrewBelt/WaveEdit/issues/17 . Saving banks should no longer overwrite wave files.
+- Added interpolation between any two wavetables. Select any contiguous range of wavetables, right-click to invoke the context menu, choose Interpolate to fill the range with an interpolation between the first and last tables in the range.
+
+Adam Schabtach
+22 April 2021
+adam@studionebula.com
