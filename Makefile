@@ -1,4 +1,4 @@
-VERSION = 1.1
+VERSION = 1.2
 
 FLAGS = -Wall -Wextra -Wno-unused-parameter -g -Wno-unused -O3 -march=nocona -ffast-math \
 	-DVERSION=$(VERSION) -DPFFFT_SIMD_DISABLE \
@@ -80,6 +80,7 @@ dist: WaveEdit
 	mkdir -p dist/WaveEdit
 	cp -R banks dist/WaveEdit
 	cp LICENSE* dist/WaveEdit
+	cp CHANGELOG.txt dist/WaveEdit
 	cp doc/manual.pdf dist/WaveEdit
 ifeq ($(ARCH),lin)
 	cp -R logo*.png fonts catalog dist/WaveEdit
